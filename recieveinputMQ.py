@@ -26,7 +26,7 @@ class RecieveInputMQ():
         self.msg.header.stamp = 0.
         #self.pub = rospy.Publisher('/vesc/low_level/ackermann_cmd_mux/input/teleop',AckermannDriveStamped,queue_size=1)
 
-        self.pub = rospy.Publisher('DTdata',AckermannDriveStamped,queue_size=1)
+        self.twinDataPub = rospy.Publisher('DTdata',AckermannDriveStamped,queue_size=1)
         
         
         #Connection to broker
@@ -73,7 +73,7 @@ class RecieveInputMQ():
         self.msg.header.stamp = rospy.Time.now()
         self.msg.drive.speed = self.desired_velocity
         self.msg.drive.steering_angle = self.desired_steer_angle
-        self.pub.publish(self.msg)
+        self.twinDataPub.publish(self.msg)
         
         
 if __name__ == '__main__': 
