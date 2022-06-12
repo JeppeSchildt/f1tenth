@@ -6,7 +6,7 @@ from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 class PurePursuit:
     def __init__(self):
-        rospy.init_node("PureTest",anonymous=True)
+        rospy.init_node("Pure Pursuit",anonymous=True)
         self.rate = rospy.Rate(100)
         self.laserSub = rospy.Subscriber('/scan',LaserScan,self.callback)
         self.ppPub = rospy.Publisher('/ppdata',AckermannDriveStamped,queue_size=1)
