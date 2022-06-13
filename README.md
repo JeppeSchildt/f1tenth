@@ -1,6 +1,6 @@
 # README
 
-The following section will walk the reader through the steps to setup the ROS workspace for this project and how to Launch the Car.
+This README will walk the reader through the steps to setup the ROS workspace for this project and how to Launch the Car.
 This tutorial is intended for unix-based terminals.
 
 It is assumed that ROS-melodic is installed on the Jetson.
