@@ -75,7 +75,7 @@ $ roslaunch racecar drive.launch
 
 Now we can activate the different kinds of control.
 
-For Digital Twin control, run these three Python scripts in seperate terminals:
+For external control, run these three Python scripts in seperate terminals:
 
 ```console
 $ python3 f1tenthv2/f1tenth_ws/src/f1tenth_system/racecar/racecar/
@@ -87,7 +87,7 @@ $ python3 f1tenthv2/f1tenth_ws/src/f1tenth_system/racecar/racecar/
 $ python3 f1tenthv2/f1tenth_ws/src/f1tenth_system/racecar/racecar/
     scripts/recieveinputMQ.py
 ```
-Here it is noted that the Digital Twin team also needs to comsume and send input to us to actually activate the DT control.
+Here it is noted that the external controller also needs to comsume and send input to actually activate the external control.
 
 For Manual control, run this Python script in a seperate terminal:
 
