@@ -17,13 +17,13 @@ class ManualController():
         self.desired_steer_angle = 0.
 
         #Subscribing to buttons data from joy to check if manual control is ON
-        self.sub = rospy.Subscriber('/vesc/joy', Joy, self.send_manual_control_data)
+        self.joySub = rospy.Subscriber('/vesc/joy', Joy, self.pub_manual_control)
 
         #Publishing to Teleop to control the car
         self.pub = rospy.Publisher('MCdata',AckermannDriveStamped,queue_size=1)
 
 
-    def send_manual_control_data(self, data):  
+    def pub_manual_control(self, data):  
 
         self.desired_velocity = data.axes[1] * 5
         self.desired_steer_angle = data.axes[2] * 0.340000003575
