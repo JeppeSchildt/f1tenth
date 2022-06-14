@@ -23,7 +23,7 @@ class Brain():
         self.ppControl = False
         self.scantime_interval = rospy.Duration(secs=0.2)
         self.last_scan = rospy.Time.now()
-        self.ttc_threshold = 0.8
+        self.ttc_threshold = 0.4
 
         #Subscribing to lidar data from scan topic
         self.laserSub = rospy.Subscriber('/scan', LaserScan, self.emergency_brake)
