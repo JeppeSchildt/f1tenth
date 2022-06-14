@@ -1,54 +1,4 @@
 #!/usr/bin/env python
-"""
-#!/usr/bin/env python
-import rospy
-import math
-import numpy as np
-from sensor_msgs.msg import LaserScan
-from ackermann_msgs.msg import AckermannDriveStamped
-
-def callback(msg=None):
-    # steer 0.34 -0.34
-    if msg is not None:
-	#rospy.loginfo('hilo: %.2f',np.mean(msg.ranges[500:580]))
-	rospy.loginfo('min: %.2f max %.2f increment %.6f',msg.angle_min,msg.angle_max,msg.angle_increment)
-        if np.mean(msg.ranges[500:580]) < 1.5:
-	    actuate(0)
-        else:
-	    actuate(0)
-	    #ack_msg.drive.steering_angle = -math.pi/2.0 
-        #ack_msg.drive.steering_angle = math.pi/2.0
-
-def actuate(speed, angle=None,frameid=None):
-    ack_msg = AckermannDriveStamped()
-    ack_msg.header.stamp = rospy.Time.now()
-    if frameid is not None:
-        ack_msg.header.frame_id = frameid
-    if angle is not None:
-        ack_msg.drive.sterring_angle = angle
-    ack_msg.drive.speed = speed
-    pub.publish(ack_msg)
-
-def limitercheck(speedmsg):
-    if (speedmsg.drive.speed > 3):
-        rospy.loginfo("Speed lowered to 3 from: %.2f",speedmsg.drive.speed)
-        actuate(3)
-
-def body():
-    rospy.init_node('test_node')
-    rate = rospy.Rate(5)	
-    while not rospy.is_shutdown():
-        rate.sleep()
-
-if __name__ == '__main__':
-    try: 
-	pub = rospy.Publisher('/vesc/low_level/ackermann_cmd_mux/input/teleop',AckermannDriveStamped,queue_size=1)
-        sub = rospy.Subscriber('/scan',LaserScan,callback)
-        sub2 = rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output',AckermannDriveStamped,limitercheck)
-        body()
-    except rospy.ROSInterruptException:
-        pass
-"""
 
 from pickle import TRUE
 import rospy
@@ -63,28 +13,32 @@ class Brain():
         
         rospy.init_node('Brain', anonymous=True)
         self.rate = rospy.Rate(100) # 10hz
+
         #SPEED LIMITER
-        self.speed_limit = 2 #SET DOWN LATER, VERY HIGH
+        self.speed_limit = 2 
+
         self.current_speed = 0
         self.EMERGENCY_STOP = False
         self.MANUAL_CONTROL = False
         self.ppControl = False
         self.scantime_interval = rospy.Duration(secs=0.2)
         self.last_scan = rospy.Time.now()
-        self.ttc_threshold = 0.8 #Not tested!
+        self.ttc_threshold = 0.8
+
         #Subscribing to lidar data from scan topic
-        self.sub1 = rospy.Subscriber('/scan', LaserScan, self.emergency_brake)
+        self.laserSub = rospy.Subscriber('/scan', LaserScan, self.emergency_brake)
 
         #Subscribing to desired speed and steering angle data recieved from DT
-        self.sub2 = rospy.Subscriber('/DTdata', AckermannDriveStamped, self.digital_twin_control)   
+        self.twinSub = rospy.Subscriber('/DTdata', AckermannDriveStamped, self.digital_twin_control)   
 
         #Subscribing to buttons data from joy to check if manual control is ON
-        self.sub3 = rospy.Subscriber('/vesc/joy', Joy, self.control_switch)
+        self.joySub = rospy.Subscriber('/vesc/joy', Joy, self.control_switch)
 
         #Subscribing to desired speed and steering angle data recieved from manual_controller
-        self.sub4 = rospy.Subscriber('/MCdata', AckermannDriveStamped, self.manual_control)
+        self.mcSub = rospy.Subscriber('/MCdata', AckermannDriveStamped, self.manual_control)
 
-        self.sub5 = rospy.Subscriber('/ppdata',AckermannDriveStamped,self.purepursuit)
+        #Subscribing to desired speed and steering angle data recieved from Pure Pursuit
+        self.ppSub = rospy.Subscriber('/ppdata',AckermannDriveStamped,self.pure_pursuit)
 
         #Publishing to Teleop to control the car
         self.pub = rospy.Publisher('/vesc/low_level/ackermann_cmd_mux/input/teleop',AckermannDriveStamped,queue_size=1)
@@ -96,7 +50,6 @@ class Brain():
         if self.current_speed > 0 and rospy.Time.now()-self.last_scan > self.scantime_interval: #TTC -> inf if dist deriv = 0
             ttcLHS = []
             ttcRHS = []
-            rospy.loginfo("ttc check beginning")
             for index, p in enumerate(self.ranges[360:540]): #45degree LHS
                 if not math.isinf(p) and not math.isnan(p):
                     angle = math.radians(45)-scan.angle_increment*index
@@ -113,8 +66,7 @@ class Brain():
                     if (distance_deriv > 0): #Ensure no division by 0
                         ttcRHS.append(p/distance_deriv)
             ttc = ttcLHS + ttcRHS
-            #rospy.loginfo("min value %.2f",np.min(ttc))
-            minTTC = 0 
+            
             try:
                 minTTC = np.min(ttc)
             except ValueError:
@@ -149,7 +101,7 @@ class Brain():
             self.MANUAL_CONTROL = True
         if data.buttons[4] == 0:
             self.MANUAL_CONTROL = False
-            #self.drive(0,0)
+            self.drive(0,0)
         if data.buttons[7] == 1: #R2
             rospy.loginfo("Disabled emergency brake")
             self.EMERGENCY_STOP = False
@@ -172,7 +124,7 @@ class Brain():
             rospy.loginfo("ManualControl enganged")
             self.drive(data.drive.speed, data.drive.steering_angle)
 
-    def purepursuit(self,data):
+    def pure_pursuit(self,data):
         if self.ppControl and not self.EMERGENCY_STOP and not self.MANUAL_CONTROL:
             rospy.loginfo("PurePursuit enganged")
             self.drive(data.drive.speed,data.drive.steering_angle)
